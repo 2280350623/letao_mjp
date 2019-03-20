@@ -18,7 +18,9 @@ $(function () {
                         max: 6,
                         message: "用户名长度须为2-6位"
                     },
-                    // callback
+                    callback: {
+                        message: "用户名不存在"
+                    }
                 }
             },
             //密码
@@ -35,8 +37,10 @@ $(function () {
                         min: 6,
                         max: 12,
                         message: "密码长度须为6-12位"
+                    },
+                    callback: {
+                        message: "密码不正确"
                     }
-                    // callback
                 }
             }
         },
@@ -58,10 +62,12 @@ $(function () {
             data: $form.serialize(),
             success: function (info) {
                 if (info.error === 1000) {
-                    alert('用户名不正确')
+                    // alert('用户名不正确')
+                    $(form).data('bootstrapValidator').updateStatus('username','INVALID','callback')
                 }
                 if (info.error === 1001) {
-                    alert('密码错误')
+                    // alert('密码错误')
+                    $(form).data('bootstrapValidator').updateStatus('password','INVALID','callback')
                 }
                 if (info.success) {
                     // 登录成功
@@ -69,5 +75,10 @@ $(function () {
                 }
             }
         })
+    })
+    // 重置
+    $('[type=reset]').on('click',function(){
+        // 重置表格。它隐藏所有错误元素和反馈图标。所有字段都标记为尚未验证。
+        $(form).data('bootstrapValidator').resetForm(true);//如果true，该方法重置具有验证器规则的字段。
     })
 })
