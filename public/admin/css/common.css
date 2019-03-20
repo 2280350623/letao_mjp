@@ -1,4 +1,4 @@
-
+/* 默认样式 */
 .body-bg {
     background: #222d32;
 }
@@ -13,14 +13,16 @@ html, body {
     padding: 0;
 }
 
-ul {
+ul,li {
     list-style: none;
 }
-  
+
+a,
 a:link,
 a:visited,
 a:hover,
 a:active {
+    color: #fff;
     text-decoration: none;
 }
 
@@ -32,4 +34,123 @@ a:active {
     height: 40px;
     font-size: 20px;
     line-height: 40px;
+}
+/* 公共样式 */
+/* ---------------------------侧边栏导航 */
+.lt_aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 180px;
+    height: 100%;
+    background: #222d32;
+    z-index: 999;
+    transition: all 1s;
+}
+
+.lt_aside.now {
+    left: -180px;
+}
+
+.lt_aside .brand {
+    width: 100%;
+    height: 50px;
+    background: #367FA9;
+    text-align: center;
+    line-height: 50px;
+    font-size: 24px;
+}
+
+.user {
+    width: 100%;
+    height: 150px;
+    padding-top: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.user img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.user p {
+    height: 40px;
+    line-height: 40px;
+    color: #fff;
+    text-align: center;
+    font-size: 18px;
+}
+
+.nav a {
+    display: block;
+    width: 100%;
+    height: 40px;
+    text-align: center;
+    line-height: 40px;
+    font-size: 14px;
+    border-left: 3px solid transparent;
+}
+
+.nav a.active {
+    border-left: 3px solid blue;
+    background: #1d1f21;
+}
+
+.nav .second a {
+    padding-left: 30px;
+}
+
+/* ----------------------------右侧内容 */
+.lt_main {
+    width: 100%;
+    height: 100%;
+    /* background: pink; */
+    padding-top: 50px;
+    padding-left: 180px;
+    transition: all 1s;
+}
+
+.lt_main.now {
+    padding-left: 0;
+}
+
+.lt_topbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 50px;
+    background: #3C8DBC;
+    padding-left: 180px;
+    transition: all 1s;
+}
+
+.lt_topbar.now {
+    padding-left: 0;
+}
+
+.lt_topbar a {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    line-height: 50px;
+    font-size: 18px;
+}
+
+.breadcrumb {
+    /* padding: 8px 15px; */
+    margin: 20px 0;
+}
+
+.breadcrumb a {
+    color: #337ab7;
+}
+
+.lt_content .left,
+.lt_content .right {
+  height: 400px;
+  width: 47%;
+  background-color: pink;
 }
