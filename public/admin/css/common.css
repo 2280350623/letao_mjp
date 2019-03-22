@@ -152,7 +152,7 @@ a:active {
 .lt_content .right {
   height: 400px;
   width: 47%;
-  background-color: pink;
+  /* background-color: pink; */
 }
 
 .table.table-bordered th,
