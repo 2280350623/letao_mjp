@@ -4,12 +4,12 @@ $(function () {
     var id,isDelete;
     render(1);
     // 渲染
-    function render(page) {
+    function render(p) {
         $.ajax({
             type: 'get',
             url: '/user/queryUser',
             data: {
-                page: page,
+                page: p,
                 pageSize: pageSize
             },
             success: function (info) {
