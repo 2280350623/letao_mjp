@@ -1,264 +1,191 @@
-/**
- * Created by Jepson on 2018/4/9.
- */
+var page = 1
+var pageSize = 5
+var picArr = []
 
-
-$(function() {
-
-  var currentPage = 1; // 当前页
-  var pageSize = 2; // 一页多少条
-  var picArr = []; // 专门用来保存图片对象
-
-  // 1. 一进入页面就进行页面渲染
-  render();
-
-  function render() {
-    $.ajax({
-      url: "/product/queryProductDetailList",
-      type: "get",
-      data: {
-        page: currentPage,
-        pageSize: pageSize
-      },
-      success: function( info ) {
-        console.log(info);
-        // 将模板与数据对象相结合, 渲染到页面中
-        var htmlStr = template( "productTpl", info );
-        $('.lt_content tbody').html( htmlStr );
-
-        // 进行分页初始化
-        $('#paginator').bootstrapPaginator({
-          // 指定版本
-          bootstrapMajorVersion: 3,
-          // 当前页
-          currentPage: info.page,
-          // 总页数
-          totalPages: Math.ceil(  info.total / info.size ),
-          // 给下面的页码添加点击事件
-          onPageClicked: function( a, b, c, page ) {
-            currentPage = page;
-            render();
-          }
-        })
-      }
-    })
-  };
-
-
-  // 2. 点击添加按钮, 显示添加模态框
-  $('#addBtn').click(function() {
-    $('#addModal').modal("show");
-
-
-    // 发送 ajax 请求, 请求二级分类列表数据, 进行渲染下拉菜单
-    $.ajax({
-      url: "/category/querySecondCategoryPaging",
-      type: "get",
-      data: {
-        page: 1,
-        pageSize: 100
-      },
-      success: function( info ) {
-        console.log(info);
-        var htmlStr = template( "dropdownTpl", info );
-        $('.dropdown-menu').html( htmlStr );
-
-        // 注意: 不要在事件处理函数中, 注册事件,
-        //       会重复注册事件
-      }
-    })
-
-  });
-
-
-  // 3. 注册事件委托, 给 a 注册点击事件
-  $('.dropdown-menu').on( "click", "a", function() {
-    console.log( "呵呵" );
-    // 获取选择的文本内容
-    var txt = $(this).text();
-    // 获取存在自定义属性中的 id
-    // 存的时候, data-id,
-    // 取的时候, 直接 $(this).data("id") 不需要加上 前面的 data-
-    var id = $(this).data("id");
-
-    $('#dropdownText').text( txt );
-    // 设置隐藏域
-    $('[name="brandId"]').val(id);
-  });
-
-  // 4. 配置上传图片回调函数
-  $('#fileupload').fileupload({
-    // 返回数据类型
-    dataType: "json",
-    // 上传完图片, 响应的回调函数配置
-    // 每一张图片上传, 都会响应一次
-    done: function( e, data ) {
-      console.log( data );
-      // 获取图片地址对象
-      var picObj = data.result;
-      // 获取图片地址
-      var picAddr = picObj.picAddr;
-
-      // 新得到的图片对象, 应该推到数组的最前面    push pop shift unshift
-      picArr.unshift( picObj );
-      // 新的图片, 应该添加到 imgBox 最前面去
-      $('#imgBox').prepend('<img src="'+ picAddr +'" width="100">');
-
-      // 如果上传的图片个数大于 3个, 需要将最旧的那个(最后面的哪项), 要删除
-     if( picArr.length > 3 ) {
-       // 删除数组的最后一项
-       picArr.pop();
-       // 除了删除数组的最后一项, 还需要将页面中渲染的最后一张图片删除掉
-       // 通过 last-of-type 找到imgBox盒子中最后一个 img 类型的标签, 让他自杀
-       $("#imgBox img:last-of-type").remove();
-     }
-
-
-      // 如果处理后, 图片数组的长度为 3, 说明已经选择了三张图片, 可以进行提交
-      // 需要将表单 picStatus 的校验状态, 置成 VALID
-      if ( picArr.length === 3 ) {
-        $('#form').data("bootstrapValidator").updateStatus("picStatus", "VALID")
-      }
-
-    }
-  });
-
-
-  // 5. 配置表单校验
-  $('#form').bootstrapValidator({
-    // 将默认的排除项, 重置掉 (默认会对 :hidden, :disabled等进行排除)
-    excluded: [],
-
-    // 配置图标
-    feedbackIcons: {
-      valid: 'glyphicon glyphicon-ok',
-      invalid: 'glyphicon glyphicon-remove',
-      validating: 'glyphicon glyphicon-refresh'
+var render = function (){
+  $.ajax({
+    type: 'get',
+    url: '/product/queryProductDetailList',
+    data: {
+      page: page,
+      pageSize: pageSize
     },
+    success: function(info) {
+      console.log(info)
+      $('tbody').html(template('tpl', info))
 
-    // 配置校验字段
-    fields: {
-      // 二级分类id, 归属品牌
-      brandId: {
-        validators: {
-          notEmpty: {
-            message: "请选择二级分类"
-          }
+      paginator(info, render)
+    }
+  })
+}
+
+// 页面加载
+render()
+
+
+// 显示添加模态框
+$('.btn_add').on('click', function() {
+  $('#addModal').modal('show')
+
+  // 发送ajax请求，获取所有的二级分类
+  $.ajax({
+    type: 'get',
+    url: '/category/querySecondCategoryPaging',
+    data: {
+      page: 1,
+      pageSize: 100
+    },
+    success: function(info) {
+      console.log(info)
+      $('.dropdown-menu').html( template('tpl2', info) )
+    }
+  })
+})
+
+
+// 二级分类的选择功能
+$('.dropdown-menu').on('click', 'a', function() {
+  // 修改按钮的文本
+  $('.dropdown-text').text( $(this).text() )
+  // 修改隐藏表单的vlaue值
+  $('[name=brandId]').val( $(this).data('id') )
+  $form.data('bootstrapValidator').updateStatus('brandId', 'VALID')
+})
+
+
+// 商品图片上传功能
+$('#file').fileupload({
+  done: function(e, data) {
+    console.log(data.result)
+    // 往img_box中添加一张图片
+    $('.img_box').prepend('<img src="' + data.result.picAddr + '" width="100" height="100" alt=""> ')
+    $('.img_box img').eq(3).remove()
+
+    // 把上传的图片的结构存储到数组中
+    picArr.unshift(data.result)
+    if (picArr.length > 3) {
+      picArr.pop()
+    }
+
+    // 判断数组的长度，如果是3，应该让picStatus校验通过
+    if (picArr.length === 3) {
+      $form.data('bootstrapValidator').updateStatus('picStatus', 'VALID')
+    } else {
+      $form.data('bootstrapValidator').updateStatus('picStatus', 'INVALID')
+    }
+  }
+})
+
+// 表单校验功能
+var $form = $('form')
+$form.bootstrapValidator({
+  // 指定不校验的类型， 默认对禁用的 隐藏 不可见的不做校验
+  excluded: [],
+  // 指定对谁进行校验， 对应表单中的name属性
+  fields: {  
+    brandId: {
+      validators: {
+        notEmpty: {
+          message: '请选择一个二级分类'
         }
-      },
-      // 商品名称
-      proName: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品名称"
-          }
+      }
+    },
+    proName: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的名称'
         }
-      },
-      // 商品描述
-      proDesc: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品描述"
-          }
+      }
+    },
+    proDesc: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的描述'
         }
-      },
-      // 商品库存
-      // 要求: 必须是非零开头的数字, 非零开头, 也就是只能以 1-9 开头
-      // 数字: \d
-      // + 表示一个或多个
-      // * 表示零个或多个
-      // ? 表示零个或1个
-      // {n} 表示出现 n 次
-      num: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品库存"
-          },
-          //正则校验
-          regexp: {
-            regexp: /^[1-9]\d*$/,
-            message: '商品库存格式, 必须是非零开头的数字'
-          }
+      }
+    },
+    num: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的库存'
+        },
+        // 1-99999 
+        regexp: {
+          regexp: /^[1-9]\d{0,4}$/,
+          message: '商品库存只能是1-99999之间'
         }
-      },
-      // 尺码校验, 规则必须是 32-40, 两个数字-两个数字
-      size: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品尺码"
-          },
-          //正则校验
-          regexp: {
-            regexp: /^\d{2}-\d{2}$/,
-            message: '尺码格式, 必须是 32-40'
-          }
+      }
+    },
+    size: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的尺码'
+        },
+        // xx-xx
+        regexp: {
+          regexp: /^\d{2}-\d{2}$/,
+          message: '尺码的格式必须是xx-xx'
         }
-      },
-      // 商品价格
-      price: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品价格"
-          }
+      }
+    },
+    oldPrice: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的原价'
         }
-      },
-      // 商品原价
-      oldPrice: {
-        validators: {
-          notEmpty: {
-            message: "请输入商品原价"
-          }
+      }
+    },
+    price: {
+      validators: {
+        notEmpty: {
+          message: '请输入商品的价格'
         }
-      },
-      // 标记图片是否上传满三张
-      picStatus: {
-        validators: {
-          notEmpty: {
-            message: "请上传3张图片"
-          }
+      }
+    },
+    picStatus: {
+      validators: {
+        notEmpty: {
+          message: '请上传3张图片'
         }
       }
     }
-  });
+  },
+  feedbackIcons: {
+    valid: 'glyphicon glyphicon-thumbs-up',
+    invalid: 'glyphicon glyphicon-thumbs-down',
+    validating: 'glyphicon glyphicon-refresh'
+  }
+})
 
-  // 6. 注册校验成功事件
-  $("#form").on("success.form.bv", function( e ) {
-    // 阻止默认的提交
-    e.preventDefault();
 
-    // 表单提交得到的参数字符串
-    var params = $('#form').serialize();
+// 注册表单校验成功的事件
+$form.on('success.form.bv', function(e) {
+  e.preventDefault()
 
-    // 拼接上所有的图片参数
-    params += "&picArr=" + JSON.stringify( picArr );
+  // 获取到了除了picArr之外所有的参数
+  var params = $form.serialize()
+  params += '&picArr=' + JSON.stringify(picArr)
+  // console.log(params)
+  // 发送ajax请求
+  $.ajax({
+    type: 'post',
+    url: '/product/addProduct',
+    data: params,
+    success: function(info) {
+      if (info.success) {
+        // 关闭模态框
+        $('#addModal').modal('hide')
+        // 重置表单的内容
+        $form.data('bootstrapValidator').resetForm(true)
+        // 重新渲染第一页
+        page = 1
+        render()
 
-    // 通过 ajax 进行添加请求
-    $.ajax({
-      url: "/product/addProduct",
-      type: "post",
-      data: params,
-      success: function( info ) {
-        console.log( info )
-        if (info.success) {
-          // 关闭模态框
-          $('#addModal').modal("hide");
-          // 重置校验状态和文本内容
-          $('#form').data("bootstrapValidator").resetForm(true);
-          // 重新渲染第一页
-          currentPage = 1;
-          render();
-
-          // 手动重置, 下拉菜单
-          $('#dropdownText').text("请选择二级分类")
-
-          // 删除结构中的所有图片
-          $('#imgBox img').remove();
-          // 重置数组 picArr
-          picArr = [];
-
-        }
+        // 重置数据
+        $('.dropdown-text').text('请选择二级分类')
+        picArr = []
+        $('.img_box img').remove()
       }
-    })
+    }
   })
-
-});
+})

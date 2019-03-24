@@ -1,94 +1,135 @@
-/**
- * Created by Jepson on 2018/4/6.
- */
+// 实现一些公共的js功能
 
-// 配置禁用小圆环
-NProgress.configure({ showSpinner: false });
-
-//// 开启进度条
-//NProgress.start();
-//
-//setTimeout(function() {
-//  // 关闭进度条
-//  NProgress.done();
-//}, 500)
-
-
-// ajaxStart 所有的 ajax 开始调用
+// 什么时候开始  什么时候停
+// 当ajax请求请求开始的时候，显示进度条
+// 当ajax请求结束的时候，隐藏进度条
+// jquery.ajax的全局事件
+// jquery的ajax全局事件 会 在任意一个ajax请求请求执行的时候触发
+// 6 个全局事件
+// ajaxStart:   开始进度条
+// ajaxSend:
+// ajaxSuccess:
+// ajaxError:
+// ajaxComplete
+// ajaxStop  ：   结束进度条
+// NProgress.start()
+// NProgress.done()
+// https://www.cnblogs.com/yangtoude/p/jquery-ajax-formdata-upload.html
+NProgress.configure({
+  // 禁用进度环
+  showSpinner: false
+})
 $(document).ajaxStart(function() {
-  NProgress.start();
-});
-
-
-// ajaxStop 所有的 ajax 结束调用
+  NProgress.start()
+  // console.log('ajax开始发送了')
+})
 $(document).ajaxStop(function() {
-  // 模拟网络延迟
   setTimeout(function() {
-    NProgress.done();
+    NProgress.done()
   }, 500)
-});
+  // console.log('ajax结束发送了')
+})
 
 
-// 在一进入页面进行登录状态获取
-// 如果后端响应头中设置了 Content-Type: application/json
-// jquery 会自动识别, 将返回数据类型, 当成json字符串解析成对象
 
-if ( location.href.indexOf("login.html") === -1 ) {
-  $.ajax({
-    url: "/employee/checkRootLogin",
-    type: "get",
-    success: function( info ) {
-      console.log( info )
-      if ( info.success ) {
-        console.log( "登陆了" );
-        // 啥也不用干
+// 二级菜单的显示和隐藏
+$('.second').prev().on("click", function() {
+  // console.log('哈哈')
+  $(this).next().stop().slideToggle()
+})
+
+// 菜单的显示和隐藏
+$('.topbar .left').click(function() {
+  $('.lt_aside,.lt_main,.topbar').toggleClass('now')
+  // $('.lt_main').toggleClass('now')
+  // $('.topbar').toggleClass('now')
+})
+
+
+// 退出功能
+$('.topbar .right').on('click', function() {
+  $('#logoutModal').modal('show')
+})
+
+// 给确定按钮注册事件，注意： 不要在事件中注册事件
+$('.confirm').on("click", function() {
+  // 发送ajax请求，告诉服务器需要退出
+  // $.ajax({
+  //   type: 'get',
+  //   url: '/employee/employeeLogout',
+  //   success: function(info) {
+  //     if (info.success) {
+  //       location.href = 'login.html'
+  //     }
+  //   }
+  // })
+
+
+  // 参数1： 直接就是url地址
+  // 参数2： 可选的data
+  // 参数3： success的回调
+  $.get('/employee/employeeLogout', function(info){
+    if (info.success) {
+      location.href = 'login.html'
+    }
+  })
+  // $.post(url, data, function(){})
+})
+
+
+/** 
+ * 通过的分页功能
+ * @param {*} info 分页的数据
+ * @param {*} render 点击分页后的回调函数
+ */
+function paginator(info, render) {
+  // 分页
+  $('#paginator').bootstrapPaginator({
+    bootstrapMajorVersion: 3,
+    // size: 调整尺寸
+    size: 'normal',
+    // 当前页
+    currentPage: info.page,
+    // 总页数
+    totalPages: Math.ceil(info.total / info.size),
+    // 显示多少页
+    numberOfPages: 10,
+    // 控制每个按钮的显示内容
+    itemTexts: function( type, page, current) {
+      // console.log(type, page, current)
+      switch(type) {
+        case 'first':
+          return '首页'
+        case 'prev':
+          return '上一页'
+        case 'next':
+          return '下一页'
+        case 'last':
+          return '尾页'
+        default: 
+          return page
       }
-
-      if ( info.error === 400 ) {
-        // 进行拦截, 拦截到登录页
-        location.href = "login.html";
-      }
+    },
+    // 使用bootstrap的tooltip组件
+    useBootstrapTooltip: true,
+    onPageClicked: function(a, b, c, p) {
+      page = p
+      render()
     }
   })
 }
 
 
-
-$(function() {
-  // 1. 二级分类切换功能
-  $('.category').click(function() {
-    $(this).next().stop().slideToggle();
-  });
-
-
-  // 2. 顶部菜单栏切换显示功能
-  $('.icon_menu').click(function() {
-    $('.lt_aside').toggleClass("hidemenu");
-    $('.lt_main').toggleClass("hidemenu");
-    $('.lt_topbar').toggleClass("hidemenu");
-  });
-
-  // 3. 点击退出图标显示退出模态框
-  $('.icon_logout').click(function() {
-    // 让模态框显示
-    $('#logoutModal').modal("show");
-  })
-
-  // 4. 在外面注册 logoutBtn 退出按钮, 点击事件
-  $('#logoutBtn').click(function() {
-    console.log("hehe");
-
-    // 访问退出接口, 进行退出
-     $.ajax({
-       url: "/employee/employeeLogout",
-       type: "GET",
-       dataType: "json",
-       success: function( info ) {
-
-         if ( info.success ) {
-           location.href = "login.html"
-         }
-       }
-     })
-  })
-})
+// function page(info, render) {
+//   $('#paginator').bootstrapPaginator({
+//     bootstrapMajorVersion: 3,
+//     // 调整尺寸
+//     size: 'large',
+//     currentPage: info.page,
+//     totalPages: Math.ceil(info.total / info.size),
+//     onPageClicked: function(a, b, c, page) {
+//       // page = p
+//       render(page)
+//     }
+//   })
+// }
